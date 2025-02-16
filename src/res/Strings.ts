@@ -1,0 +1,18 @@
+export const STRINGS = {
+    mainTabs: 'MainTabs',
+    home: 'Home',
+    category: 'Category',
+    curate: 'Curate',
+    sale: 'Sale',
+    more: 'More',
+    designAsPerOccasion: 'Design As Per Occasion',
+    rangeOfPattern: 'Range Of Pattern',
+    handpickedFor: 'Handpicked\nfor',
+    boutiqueCollection: 'Boutique Collection',
+    unstitched: 'Unstitched',
+    shopByFabricMaterial: 'Shop By Fabric Material',
+    shopByCategory: 'Shop By Category',
+    explore: 'explore',
+    loading: 'Loading...',
+    noData: 'No data available',
+};
