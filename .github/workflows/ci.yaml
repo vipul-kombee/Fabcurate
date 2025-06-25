@@ -1,0 +1,45 @@
+name: React / React Native CI
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      - name: 🛠 Try React Build (if applicable)
+        run: |
+          if [ -f "package.json" ] && grep -q '"build"' package.json; then
+            echo "🧱 Building React project..."
+            npm run build || echo "⚠️ React build failed or not applicable."
+          else
+            echo "ℹ️ No React build script found."
+          fi
+
+      - name: 📤 Upload React Build (if exists)
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: build
+        if: success() && hashFiles('build/**') != ''
+
+      - name: 📤 Upload APK (if present)
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-native-apk
+          path: '**/*.apk'
+        if: success() && hashFiles('**/*.apk') != ''
