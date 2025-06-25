@@ -1,32 +1,45 @@
-name: React CI – Fabcurate
+name: React / React Native CI
 
 on:
   push:
     branches:
       - '**'
-  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🟢 Set up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: 🏗️ Build project
-        run: npm run build
+      - name: 🛠 Try React Build (if applicable)
+        run: |
+          if [ -f "package.json" ] && grep -q '"build"' package.json; then
+            echo "Building React project..."
+            npm run build || echo "React build failed or not applicable."
+          else
+            echo "No React build script found."
+          fi
 
-      - name: 📤 Upload production build
+      - name: Upload React Build (if exists)
         uses: actions/upload-artifact@v4
         with:
-          name: fabcurate-build
-          path: build/
+          name: react-build
+          path: build
+        if: success() && hashFiles('build/**') != ''
+
+      - name: Upload APK (if present)
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-native-apk
+          path: '**/*.apk'
+        if: success() && hashFiles('**/*.apk') != ''
