@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: 🛠 Try React Build (if applicable)
+      - name: Try React Build (if applicable)
         run: |
           if [ -f "package.json" ] && grep -q '"build"' package.json; then
             echo "Building React project..."
