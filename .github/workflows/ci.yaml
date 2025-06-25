@@ -24,31 +24,33 @@ jobs:
     - name: Install npm dependencies
       run: npm install
 
+    - name: Set up JDK for Android
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Set version info
       id: version
       run: |
         VERSION=$(git describe --tags --always --dirty)
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-    - name: Locate and zip APK (if exists)
+    - name: Build Android APK (Release)
+      working-directory: android
+      run: ./gradlew assembleRelease
+
+    - name: Locate and zip APK
       run: |
         mkdir -p artifacts
-        APK_FILES=$(find android -name "*.apk" || true)
-        if [ -z "$APK_FILES" ]; then
-          echo "No APK found, skipping zip."
-          exit 0
-        fi
-        for apk in $APK_FILES; do
-          cp "$apk" artifacts/
-        done
+        find android/app/build/outputs/apk/release -name "*.apk" -exec cp {} artifacts/ \;
         cd artifacts
         ZIP_NAME="react-native-apk-${{ steps.version.outputs.version }}.zip"
         zip -r "$ZIP_NAME" ./*.apk
         echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
 
-    - name: Upload APK artifact (if exists)
+    - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.ZIP_NAME }}
         path: artifacts/${{ env.ZIP_NAME }}
-      if: success() && env.ZIP_NAME != ''
