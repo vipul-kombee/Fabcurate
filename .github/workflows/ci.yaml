@@ -1,7 +1,10 @@
-name: React / React Native CI
+name: React Native Android CI
 
 on:
   push:
+    branches:
+      - '**'
+  pull_request:
     branches:
       - '**'
 
@@ -10,36 +13,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+    - name: Install npm dependencies
+      run: npm install
 
-      - name: Try React Build (if applicable)
-        run: |
-          if [ -f "package.json" ] && grep -q '"build"' package.json; then
-            echo "Building React project..."
-            npm run build || echo "React build failed or not applicable."
-          else
-            echo "No React build script found."
-          fi
+    - name: Set version info
+      id: version
+      run: |
+        VERSION=$(git describe --tags --always --dirty)
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Upload React Build (if exists)
-        uses: actions/upload-artifact@v4
-        with:
-          name: react-build
-          path: build
-        if: success() && hashFiles('build/**') != ''
+    - name: Locate and zip APK (if exists)
+      run: |
+        mkdir -p artifacts
+        APK_FILES=$(find android -name "*.apk" || true)
+        if [ -z "$APK_FILES" ]; then
+          echo "No APK found, skipping zip."
+          exit 0
+        fi
+        for apk in $APK_FILES; do
+          cp "$apk" artifacts/
+        done
+        cd artifacts
+        ZIP_NAME="react-native-apk-${{ steps.version.outputs.version }}.zip"
+        zip -r "$ZIP_NAME" ./*.apk
+        echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
 
-      - name: Upload APK (if present)
-        uses: actions/upload-artifact@v4
-        with:
-          name: react-native-apk
-          path: '**/*.apk'
-        if: success() && hashFiles('**/*.apk') != ''
+    - name: Upload APK artifact (if exists)
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.ZIP_NAME }}
+        path: artifacts/${{ env.ZIP_NAME }}
+      if: success() && env.ZIP_NAME != ''
